@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Dubai Marina | 1BR | High floor | Great view",
+    "area": "Dubai Marina",
+    "type": "Apartment",
+    "beds": "1",
+    "price": "AED 1,450,000",
+    "purpose": "Buy",
+    "url": "https://www.propertyfinder.ae/en/plp/buy/apartment-for-sale-dubai-dubai-marina-XXXXX.html",
+    "highlights": ["Near metro", "Good rental demand", "Modern building"]
+  },
+  {
+    "title": "Downtown Dubai | Studio | Furnished | Investor deal",
+    "area": "Downtown Dubai",
+    "type": "Apartment",
+    "beds": "Studio",
+    "price": "AED 1,150,000",
+    "purpose": "Buy",
+    "url": "https://www.propertyfinder.ae/en/plp/buy/apartment-for-sale-dubai-downtown-dubai-XXXXX.html",
+    "highlights": ["Prime location", "Strong liquidity", "Ready unit"]
+  }
+]
