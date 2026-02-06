@@ -242,4 +242,119 @@ function escapeHtml(s) {
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
+  // ================== Property Finder Listing Cards (curated JSON) ==================
+(async function initPfCards() {
+  const pfCards = document.getElementById("pfCards");
+  const pfCount = document.getElementById("pfCount");
+  const pfAreaFilter = document.getElementById("pfAreaFilter");
+  const pfTypeFilter = document.getElementById("pfTypeFilter");
+  const pfPurposeFilter = document.getElementById("pfPurposeFilter");
+  const pfReset = document.getElementById("pfReset");
+
+  // If the section isn't on the page, skip
+  if (!pfCards) return;
+
+  let all = [];
+
+  try {
+    const res = await fetch("./pf-listings.json", { cache: "no-store" });
+    all = await res.json();
+    if (!Array.isArray(all)) all = [];
+  } catch (e) {
+    pfCards.innerHTML = `
+      <div class="card" style="grid-column:1/-1;">
+        <h3>Listings not loaded</h3>
+        <p class="muted">Make sure <b>pf-listings.json</b> exists in your repo root.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Build area options dynamically
+  const areas = [...new Set(all.map(x => x.area).filter(Boolean))].sort();
+  areas.forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a;
+    opt.textContent = a;
+    pfAreaFilter.appendChild(opt);
+  });
+
+  function apply() {
+    const area = (pfAreaFilter.value || "").trim();
+    const type = (pfTypeFilter.value || "").trim();
+    const purpose = (pfPurposeFilter.value || "").trim();
+
+    const filtered = all.filter(x => {
+      if (area && x.area !== area) return false;
+      if (type && x.type !== type) return false;
+      if (purpose && x.purpose !== purpose) return false;
+      return true;
+    });
+
+    pfCount.textContent = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
+
+    if (!filtered.length) {
+      pfCards.innerHTML = `
+        <div class="card" style="grid-column:1/-1;">
+          <h3>No listings match your filters</h3>
+          <p class="muted">Try another area or reset filters.</p>
+        </div>
+      `;
+      return;
+    }
+
+    pfCards.innerHTML = "";
+    filtered.forEach(x => {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const tags = [
+        x.area ? `<span class="tag">${escapeHtml(x.area)}</span>` : "",
+        x.type ? `<span class="tag">${escapeHtml(x.type)}</span>` : "",
+        x.beds ? `<span class="tag tag-gold">${escapeHtml(String(x.beds))} beds</span>` : ""
+      ].filter(Boolean).join("");
+
+      const highlights = Array.isArray(x.highlights) ? x.highlights.slice(0,3) : [];
+
+      card.innerHTML = `
+        <div class="card-top">${tags}</div>
+        <h3>${escapeHtml(x.title || "Listing")}</h3>
+        <p class="muted">${escapeHtml(x.purpose || "")} ${x.price ? "• " + escapeHtml(x.price) : ""}</p>
+
+        <div class="meta">
+          <div><span class="k">Area</span><span class="v">${escapeHtml(x.area || "—")}</span></div>
+          <div><span class="k">Type</span><span class="v">${escapeHtml(x.type || "—")}</span></div>
+          <div><span class="k">Beds</span><span class="v">${escapeHtml(String(x.beds || "—"))}</span></div>
+          <div><span class="k">Purpose</span><span class="v">${escapeHtml(x.purpose || "—")}</span></div>
+        </div>
+
+        ${
+          highlights.length
+            ? `<p class="muted" style="margin:0 0 12px;">• ${highlights.map(escapeHtml).join("<br>• ")}</p>`
+            : ""
+        }
+
+        <a class="btn btn-primary full" href="${escapeAttr(x.url || "#")}" target="_blank" rel="noopener">
+          Open listing
+        </a>
+      `;
+
+      pfCards.appendChild(card);
+    });
+  }
+
+  pfAreaFilter.addEventListener("change", apply);
+  pfTypeFilter.addEventListener("change", apply);
+  pfPurposeFilter.addEventListener("change", apply);
+
+  pfReset.addEventListener("click", () => {
+    pfAreaFilter.value = "";
+    pfTypeFilter.value = "";
+    pfPurposeFilter.value = "";
+    apply();
+  });
+
+  apply();
+})();
+
 }
