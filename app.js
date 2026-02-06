@@ -1,14 +1,25 @@
 /**
- * DubaiKeys – Investor Desk (no external branding in UI)
- * - WhatsApp buttons link to your number
- * - NDA modal sends a structured WhatsApp message
- * - Cards + filters demo (you can replace projects anytime)
+ * DubaiKeys – Investor Desk
+ * FULL app.js
+ *
+ * Features:
+ * - WhatsApp CTA (top + floating) linked to your number
+ * - Off-plan cards + filters (demo data)
+ * - NDA + Full Deck modal (sends WhatsApp message)
+ * - Market Listings (curated) loaded from ./pf-listings.json
+ *   - Filters: area/type/purpose
+ *   - Badge: Verified by DubaiKeys
+ *   - Buttons: Open listing + Send to WhatsApp
  */
 
-const WHATSAPP_NUMBER = "971527240975"; // +971 52 724 0975
+const WHATSAPP_NUMBER = "971527240975";
 const WA_PREFIX = "DubaiKeys Investor Desk";
 
-/* Demo projects for layout (edit anytime) */
+// Reelly/Market search button is in index.html (Option A). No external branding in this JS.
+
+/* ================== OFF-PLAN DEMO PROJECTS ==================
+   Replace anytime with your real curated off-plan projects
+============================================================== */
 const PROJECTS = [
   {
     id: 1,
@@ -48,7 +59,7 @@ const PROJECTS = [
   }
 ];
 
-/* DOM */
+/* ================== DOM (Off-plan) ================== */
 const cardsEl = document.getElementById("cards");
 const resultsCountEl = document.getElementById("resultsCount");
 const filterArea = document.getElementById("filterArea");
@@ -57,32 +68,33 @@ const filterRoiMin = document.getElementById("filterRoiMin");
 const filterRoiMax = document.getElementById("filterRoiMax");
 const resetBtn = document.getElementById("resetFilters");
 
-/* Snapshot */
+// Snapshot
 const snapArea = document.getElementById("snapArea");
 const snapPlan = document.getElementById("snapPlan");
 const snapHandover = document.getElementById("snapHandover");
 const snapRoi = document.getElementById("snapRoi");
 
-/* WhatsApp */
+// WhatsApp buttons
 const waTop = document.getElementById("whatsappTop");
 const waFloat = document.getElementById("waFloat");
 
-/* Modal */
+// NDA modal
 const ndaModal = document.getElementById("ndaModal");
 const openNdaBtns = document.querySelectorAll("#openNdaBtn, #openNdaBtn2, #openNdaBtn3");
 const closeNdaBtn = document.getElementById("closeNda");
 const ndaForm = document.getElementById("ndaForm");
 
-init();
+/* ================== INIT ================== */
+init().catch(console.error);
 
-function init() {
+async function init() {
   setupWhatsAppButtons();
-  populateAreaFilter();
-  bindEvents();
-  applyFilters();
+  initOffPlan();
+  initNdaModal();
+  await initPfCards(); // safe: only runs if section exists
 }
 
-/* WhatsApp */
+/* ================== WHATSAPP ================== */
 function whatsappUrl(text) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
@@ -95,46 +107,49 @@ function setupWhatsAppButtons() {
   if (waFloat) waFloat.href = url;
 }
 
-/* Filters */
-function populateAreaFilter() {
-  const areas = [...new Set(PROJECTS.map(p => p.area))].sort();
-  for (const area of areas) {
+/* ================== OFF-PLAN UI ================== */
+function initOffPlan() {
+  if (!cardsEl) return;
+
+  populateAreaFilter(PROJECTS);
+  bindOffPlanEvents();
+  applyOffPlanFilters();
+}
+
+function populateAreaFilter(list) {
+  if (!filterArea) return;
+  const areas = [...new Set(list.map(p => p.area).filter(Boolean))].sort();
+
+  // Keep "All areas" option already in HTML
+  areas.forEach(area => {
     const opt = document.createElement("option");
     opt.value = area;
     opt.textContent = area;
     filterArea.appendChild(opt);
-  }
+  });
 }
 
-function bindEvents() {
-  filterArea.addEventListener("change", applyFilters);
-  filterPlan.addEventListener("change", applyFilters);
-  filterRoiMin.addEventListener("input", applyFilters);
-  filterRoiMax.addEventListener("input", applyFilters);
+function bindOffPlanEvents() {
+  filterArea?.addEventListener("change", applyOffPlanFilters);
+  filterPlan?.addEventListener("change", applyOffPlanFilters);
+  filterRoiMin?.addEventListener("input", applyOffPlanFilters);
+  filterRoiMax?.addEventListener("input", applyOffPlanFilters);
 
-  resetBtn.addEventListener("click", () => {
+  resetBtn?.addEventListener("click", () => {
     filterArea.value = "";
     filterPlan.value = "";
     filterRoiMin.value = "";
     filterRoiMax.value = "";
-    applyFilters();
+    applyOffPlanFilters();
   });
-
-  openNdaBtns.forEach(btn => btn.addEventListener("click", () => openNdaModal()));
-  closeNdaBtn.addEventListener("click", closeNdaModal);
-  ndaModal.addEventListener("click", (e) => {
-    if (e.target && e.target.dataset && e.target.dataset.close) closeNdaModal();
-  });
-
-  ndaForm.addEventListener("submit", submitNdaForm);
 }
 
-function applyFilters() {
-  const area = filterArea.value || "";
-  const plan = filterPlan.value || "";
+function applyOffPlanFilters() {
+  const area = filterArea?.value || "";
+  const plan = filterPlan?.value || "";
 
-  const min = filterRoiMin.value ? Number(filterRoiMin.value) : null;
-  const max = filterRoiMax.value ? Number(filterRoiMax.value) : null;
+  const min = filterRoiMin?.value ? Number(filterRoiMin.value) : null;
+  const max = filterRoiMax?.value ? Number(filterRoiMax.value) : null;
 
   const filtered = PROJECTS.filter(p => {
     if (area && p.area !== area) return false;
@@ -146,13 +161,12 @@ function applyFilters() {
     return true;
   });
 
-  renderCards(filtered);
+  renderOffPlanCards(filtered);
   updateSnapshot(filtered[0] || PROJECTS[0] || null);
-  resultsCountEl.textContent = `${filtered.length} results`;
+  if (resultsCountEl) resultsCountEl.textContent = `${filtered.length} results`;
 }
 
-/* Render */
-function renderCards(list) {
+function renderOffPlanCards(list) {
   cardsEl.innerHTML = "";
 
   if (!list.length) {
@@ -164,7 +178,7 @@ function renderCards(list) {
     return;
   }
 
-  for (const p of list) {
+  list.forEach(p => {
     const card = document.createElement("article");
     card.className = "card";
 
@@ -189,19 +203,32 @@ function renderCards(list) {
 
     card.querySelector("button").addEventListener("click", () => openNdaModal(p.name));
     cardsEl.appendChild(card);
-  }
+  });
 }
 
-/* Snapshot */
 function updateSnapshot(p) {
   if (!p) return;
-  snapArea.textContent = p.area || "Dubai";
-  snapPlan.textContent = p.paymentPlan || "—";
-  snapHandover.textContent = p.handover ? String(p.handover) : "—";
-  snapRoi.textContent = `${p.roiMin}–${p.roiMax}%`;
+  if (snapArea) snapArea.textContent = p.area || "Dubai";
+  if (snapPlan) snapPlan.textContent = p.paymentPlan || "—";
+  if (snapHandover) snapHandover.textContent = p.handover ? String(p.handover) : "—";
+  if (snapRoi) snapRoi.textContent = `${p.roiMin}–${p.roiMax}%`;
 }
 
-/* Modal */
+/* ================== NDA MODAL ================== */
+function initNdaModal() {
+  if (!ndaModal || !ndaForm) return;
+
+  openNdaBtns.forEach(btn => btn.addEventListener("click", () => openNdaModal()));
+
+  closeNdaBtn?.addEventListener("click", closeNdaModal);
+
+  ndaModal.addEventListener("click", (e) => {
+    if (e.target && e.target.dataset && e.target.dataset.close) closeNdaModal();
+  });
+
+  ndaForm.addEventListener("submit", submitNdaForm);
+}
+
 function openNdaModal(projectName = "") {
   ndaModal.classList.add("is-open");
   ndaModal.dataset.project = projectName || "";
@@ -234,16 +261,14 @@ Please send NDA and full investment deck.`;
   closeNdaModal();
 }
 
-/* Helpers */
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-  // ================== Property Finder Listing Cards (curated JSON) ==================
-(async function initPfCards() {
+/* ================== MARKET LISTINGS (Property Finder curated JSON) ==================
+   Requires:
+   - index.html section with:
+     pfCards, pfCount, pfAreaFilter, pfTypeFilter, pfPurposeFilter, pfReset
+   - file pf-listings.json in repo root
+==================================================================================== */
+
+async function initPfCards() {
   const pfCards = document.getElementById("pfCards");
   const pfCount = document.getElementById("pfCount");
   const pfAreaFilter = document.getElementById("pfAreaFilter");
@@ -251,15 +276,15 @@ function escapeHtml(s) {
   const pfPurposeFilter = document.getElementById("pfPurposeFilter");
   const pfReset = document.getElementById("pfReset");
 
-  // If the section isn't on the page, skip
-  if (!pfCards) return;
+  // If market section isn't present, skip
+  if (!pfCards || !pfCount || !pfAreaFilter || !pfTypeFilter || !pfPurposeFilter || !pfReset) return;
 
   let all = [];
 
   try {
     const res = await fetch("./pf-listings.json", { cache: "no-store" });
-    all = await res.json();
-    if (!Array.isArray(all)) all = [];
+    const raw = await res.json();
+    all = Array.isArray(raw) ? raw : [];
   } catch (e) {
     pfCards.innerHTML = `
       <div class="card" style="grid-column:1/-1;">
@@ -267,10 +292,11 @@ function escapeHtml(s) {
         <p class="muted">Make sure <b>pf-listings.json</b> exists in your repo root.</p>
       </div>
     `;
+    pfCount.textContent = "0 listings";
     return;
   }
 
-  // Build area options dynamically
+  // Fill Area options dynamically
   const areas = [...new Set(all.map(x => x.area).filter(Boolean))].sort();
   areas.forEach(a => {
     const opt = document.createElement("option");
@@ -304,20 +330,37 @@ function escapeHtml(s) {
     }
 
     pfCards.innerHTML = "";
+
     filtered.forEach(x => {
       const card = document.createElement("article");
       card.className = "card";
 
+      // WhatsApp message for THIS listing
+      const waMsg =
+        `DubaiKeys — Listing enquiry\n\n` +
+        `Verified by DubaiKeys\n` +
+        `Title: ${x.title || "Listing"}\n` +
+        `Area: ${x.area || "—"}\n` +
+        `Type: ${x.type || "—"}\n` +
+        `Beds: ${x.beds || "—"}\n` +
+        `Purpose: ${x.purpose || "—"}\n` +
+        `Price: ${x.price || "—"}\n\n` +
+        `Link: ${x.url || ""}`;
+
+      const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`;
+
       const tags = [
+        `<span class="tag tag-verified">Verified by DubaiKeys</span>`,
         x.area ? `<span class="tag">${escapeHtml(x.area)}</span>` : "",
         x.type ? `<span class="tag">${escapeHtml(x.type)}</span>` : "",
         x.beds ? `<span class="tag tag-gold">${escapeHtml(String(x.beds))} beds</span>` : ""
       ].filter(Boolean).join("");
 
-      const highlights = Array.isArray(x.highlights) ? x.highlights.slice(0,3) : [];
+      const highlights = Array.isArray(x.highlights) ? x.highlights.slice(0, 3) : [];
 
       card.innerHTML = `
         <div class="card-top">${tags}</div>
+
         <h3>${escapeHtml(x.title || "Listing")}</h3>
         <p class="muted">${escapeHtml(x.purpose || "")} ${x.price ? "• " + escapeHtml(x.price) : ""}</p>
 
@@ -334,9 +377,15 @@ function escapeHtml(s) {
             : ""
         }
 
-        <a class="btn btn-primary full" href="${escapeAttr(x.url || "#")}" target="_blank" rel="noopener">
-          Open listing
-        </a>
+        <div class="pf-actions">
+          <a class="btn btn-primary full" href="${escapeAttr(x.url || "#")}" target="_blank" rel="noopener">
+            Open listing
+          </a>
+
+          <a class="btn btn-ghost full" href="${escapeAttr(waLink)}" target="_blank" rel="noopener">
+            Send to WhatsApp
+          </a>
+        </div>
       `;
 
       pfCards.appendChild(card);
@@ -355,6 +404,19 @@ function escapeHtml(s) {
   });
 
   apply();
-})();
+}
 
+/* ================== HELPERS ================== */
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttr(s) {
+  // Basic attribute escaping (enough for URLs in href)
+  return escapeHtml(s).replaceAll("\n", " ").trim();
 }
