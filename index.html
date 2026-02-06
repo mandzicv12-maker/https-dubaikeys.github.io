@@ -158,6 +158,52 @@
 
   </div>
 </section>
+<section id="market" class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Market listings</h2>
+      <p class="muted">Curated live listings. Click any card to open the original listing.</p>
+    </div>
+
+    <div class="filters-panel">
+      <div class="filters-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <label class="field">
+          <span>Area</span>
+          <select id="pfAreaFilter">
+            <option value="">All areas</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Type</span>
+          <select id="pfTypeFilter">
+            <option value="">All types</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="Townhouse">Townhouse</option>
+            <option value="Penthouse">Penthouse</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Purpose</span>
+          <select id="pfPurposeFilter">
+            <option value="">Buy + Rent</option>
+            <option value="Buy">Buy</option>
+            <option value="Rent">Rent</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="filters-actions">
+        <span class="muted" id="pfCount">0 listings</span>
+        <button class="btn btn-ghost" id="pfReset" type="button">Reset</button>
+      </div>
+    </div>
+
+    <div class="grid" id="pfCards"></div>
+  </div>
+</section>
 
 <!-- ================= NDA ================= -->
 <section id="nda" class="section section-dark">
