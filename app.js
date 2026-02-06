@@ -11,7 +11,7 @@
 /* ================== CONFIG ================== */
 
 // 👉 CHANGE to your real WhatsApp number (no +, no spaces)
-const WHATSAPP_NUMBER = "971500000000";
+const WHATSAPP_NUMBER = "971527240975";
 
 // Prefix for WhatsApp messages
 const WA_PREFIX = "DubaiKeys Investor Desk";
